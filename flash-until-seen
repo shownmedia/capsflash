@@ -1,0 +1,67 @@
+#!/bin/bash
+# flash-until-seen — blink the caps lock LED until the hosting terminal app
+# becomes the frontmost app (you "checked the terminal"), or until timeout.
+#
+# Usage: flash-until-seen [max_seconds]        (default 600)
+# Internal: flash-until-seen --loop <app_pid> <max_seconds>
+#
+# Phase 1 runs synchronously while the hook's process chain is still intact,
+# walks up the parent chain to find the terminal app's pid, then re-execs
+# itself detached so the hook returns immediately.
+
+LOCK=/tmp/capsflash-until-seen.pid
+
+# Caps lock LED blink. (kbflash, the keyboard-backlight variant, reported
+# success without actually lighting anything, so it's out of the chain.)
+flash() {
+    /Users/mitchell/capsflash/capsflash "$1" "$2" >/dev/null 2>&1
+}
+
+if [ "$1" != "--loop" ]; then
+    MAX_SECONDS=${1:-600}
+    # Walk up parents until we hit the process owned by launchd = the app.
+    pid=$$
+    while :; do
+        ppid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
+        [ -z "$ppid" ] || [ "$ppid" -le 1 ] && break
+        pid=$ppid
+    done
+    nohup "$0" --loop "$pid" "$MAX_SECONDS" >/dev/null 2>&1 &
+    exit 0
+fi
+
+APP_PID=$2
+MAX_SECONDS=${3:-600}
+
+# Single instance: don't stack flashers from concurrent sessions.
+if [ -f "$LOCK" ] && kill -0 "$(cat "$LOCK")" 2>/dev/null; then
+    exit 0
+fi
+echo $$ > "$LOCK"
+trap 'rm -f "$LOCK"' EXIT
+
+front_pid() {
+    local asn
+    asn=$(lsappinfo front 2>/dev/null)
+    [ -n "$asn" ] || return 1
+    lsappinfo info -only pid "$asn" 2>/dev/null | sed 's/[^0-9]//g'
+}
+
+end=$(( $(date +%s) + MAX_SECONDS ))
+
+# Already looking at the terminal: one quick blink as confirmation, done.
+fp=$(front_pid)
+if [ -n "$fp" ] && [ "$fp" = "$APP_PID" ]; then
+    flash 2 120
+    exit 0
+fi
+
+flash 8 120
+while [ "$(date +%s)" -lt "$end" ]; do
+    fp=$(front_pid)
+    if [ -n "$fp" ] && [ "$fp" = "$APP_PID" ]; then
+        exit 0
+    fi
+    flash 4 150
+    sleep 2.5
+done
