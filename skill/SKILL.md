@@ -16,7 +16,7 @@ Flash the caps lock LED as a physical "look at the terminal" signal. The real ca
 - No args → 8 blinks at 120ms half-period (standard "done, look here").
 - `blinks`: number of on/off cycles; `period_ms`: half-period in ms (min 20).
 
-(`kbflash`/`kbset`, the white keyboard-backlight variants, are retired — kbflash reported success while corebrightnessd silently suppressed the light, so flashes went missing. Mitchell moved back to caps lock 2026-07-26. The binaries remain in the repo but nothing should call them.)
+Caps lock is PRIMARY (Mitchell moved back to it 2026-07-26). `kbflash [cycles] [cycle_ms]` (white keyboard-backlight breathe, no permissions needed) is the fallback ONLY when capsflash exits nonzero — i.e. the hosting app lacks Input Monitoring. Don't lead with kbflash: corebrightnessd can silently suppress the backlight (API still reports success), and it needs System Settings → Keyboard → "Adjust keyboard brightness in low light" OFF.
 
 ## Patterns
 

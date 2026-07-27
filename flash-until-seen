@@ -11,10 +11,13 @@
 
 LOCK=/tmp/capsflash-until-seen.pid
 
-# Caps lock LED blink. (kbflash, the keyboard-backlight variant, reported
-# success without actually lighting anything, so it's out of the chain.)
+# Caps lock LED blink; if the hosting app lacks Input Monitoring permission
+# (capsflash exits nonzero), breathe the keyboard backlight instead so the
+# signal is never silently dropped. kbflash ignores blink timings — one
+# breath cycle reads better than many fast ones.
 flash() {
-    /Users/mitchell/capsflash/capsflash "$1" "$2" >/dev/null 2>&1
+    /Users/mitchell/capsflash/capsflash "$1" "$2" >/dev/null 2>&1 \
+        || /Users/mitchell/capsflash/kbflash 1 2400 >/dev/null 2>&1
 }
 
 if [ "$1" != "--loop" ]; then
