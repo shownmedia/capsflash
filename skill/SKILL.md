@@ -1,6 +1,6 @@
 ---
 name: claude-notification
-description: Flash the Mac's caps lock LED to get Mitchell's physical attention, without changing caps lock state. Use when asked to "flash the light", "notify me", "get my attention", "ping me when done", or after finishing a long-running task Mitchell asked to be alerted about. Purely visual, no sound, no notification center.
+description: Flash the Mac's caps lock LED to get the user's physical attention, without changing caps lock state. Use when asked to "flash the light", "notify me", "get my attention", "ping me when done", or after finishing a long-running task the user asked to be alerted about. Purely visual, no sound, no notification center.
 ---
 
 # Claude Notification (caps lock LED flash)
@@ -10,13 +10,13 @@ Flash the caps lock LED as a physical "look at the terminal" signal. The real ca
 ## Usage
 
 ```bash
-/Users/mitchell/capsflash/capsflash [blinks] [period_ms]   # green caps lock LED blink — PRIMARY
+__CAPSFLASH_HOME__/capsflash/capsflash [blinks] [period_ms]   # green caps lock LED blink — PRIMARY
 ```
 
 - No args → 8 blinks at 120ms half-period (standard "done, look here").
 - `blinks`: number of on/off cycles; `period_ms`: half-period in ms (min 20).
 
-Caps lock is PRIMARY (Mitchell moved back to it 2026-07-26). `kbflash [cycles] [cycle_ms]` (white keyboard-backlight breathe, no permissions needed) is the fallback ONLY when capsflash exits nonzero — i.e. the hosting app lacks Input Monitoring. Don't lead with kbflash: corebrightnessd can silently suppress the backlight (API still reports success), and it needs System Settings → Keyboard → "Adjust keyboard brightness in low light" OFF.
+Caps lock is PRIMARY. `kbflash [cycles] [cycle_ms]` (white keyboard-backlight breathe, no permissions needed) is the fallback ONLY when capsflash exits nonzero — i.e. the hosting app lacks Input Monitoring. Don't lead with kbflash: corebrightnessd can silently suppress the backlight (API still reports success), and it needs System Settings → Keyboard → "Adjust keyboard brightness in low light" OFF.
 
 ## Patterns
 
@@ -29,7 +29,7 @@ Caps lock is PRIMARY (Mitchell moved back to it 2026-07-26). `kbflash [cycles] [
 For "ping me when X finishes", chain it after the long command:
 
 ```bash
-long_command; /Users/mitchell/capsflash/capsflash
+long_command; __CAPSFLASH_HOME__/capsflash/capsflash
 ```
 
 Run flashes in the background (`&` or `run_in_background`) if the flash shouldn't block further work.
@@ -37,14 +37,14 @@ Run flashes in the background (`&` or `run_in_background`) if the flash shouldn'
 ## Flash until seen
 
 ```bash
-/Users/mitchell/capsflash/flash-until-seen [max_seconds]   # default 600
+__CAPSFLASH_HOME__/capsflash/flash-until-seen [max_seconds]   # default 600
 ```
 
-Keeps blinking the caps lock LED in short bursts until the terminal app that launched it becomes the frontmost app (Mitchell switched back to check it), then stops immediately. Detaches itself, so it never blocks; a lockfile at `/tmp/capsflash-until-seen.pid` prevents stacked flashers from concurrent sessions. Use this for "keep flashing until I look" requests.
+Keeps blinking the caps lock LED in short bursts until the terminal app that launched it becomes the frontmost app (the user switched back to check it), then stops immediately. Detaches itself, so it never blocks; a lockfile at `/tmp/capsflash-until-seen.pid` prevents stacked flashers from concurrent sessions. Use this for "keep flashing until I look" requests.
 
 ## Notes and troubleshooting
 
 - Automatic flash-until-seen when a session finishes or is blocked waiting on input is already wired via Stop/Notification hooks in `~/.claude/settings.json` — only invoke this skill for extra, manual, or custom-pattern flashes.
-- `capsflash` exiting with `device open failed (0xe00002e2)` means the hosting terminal app lacks **Input Monitoring** permission: `open "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent"` and have Mitchell enable that app, then quit and reopen it. The grant is per-app and can be reset by OS updates.
-- Rebuild after editing sources: `clang -O2 -o /Users/mitchell/capsflash/capsflash /Users/mitchell/capsflash/capsflash.c -framework IOKit -framework CoreFoundation`
+- `capsflash` exiting with `device open failed (0xe00002e2)` means the hosting terminal app lacks **Input Monitoring** permission: `open "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent"` and have the user enable that app, then quit and reopen it. The grant is per-app and can be reset by OS updates.
+- Rebuild after editing sources: `clang -O2 -o __CAPSFLASH_HOME__/capsflash/capsflash __CAPSFLASH_HOME__/capsflash/capsflash.c -framework IOKit -framework CoreFoundation`
 - LED colors are fixed in hardware: caps lock is green-only, no RGB anywhere on this MacBook Pro. The camera's green LED cannot be used either — it's hardwired to camera sensor power.
