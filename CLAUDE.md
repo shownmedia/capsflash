@@ -1,5 +1,16 @@
 # capsflash
 
+## Commands
+```
+test:        none (no suite). Closest check: bash -n install.sh flash-until-seen && clang -O2 -o /tmp/cf_test capsflash.c -framework IOKit -framework CoreFoundation
+run local:   ~/capsflash/capsflash (8 blinks; `20 70` urgent strobe, `2 250` subtle pulse); hook path: ~/capsflash/flash-until-seen 600
+deploy:      git push origin main, then bash install.sh (idempotent; rebuilds both binaries into ~/capsflash and rewrites the Stop/Notification hooks)
+verify live: ~/capsflash/capsflash exits 0 and the caps lock LED blinks; curl -fsSL https://raw.githubusercontent.com/shownmedia/capsflash/main/install.sh | diff -q - install.sh prints nothing
+```
+- Manual builds (install.sh does both): `clang -O2 -o capsflash capsflash.c -framework IOKit -framework CoreFoundation` and `clang -O2 -fobjc-arc -o kbflash kbflash.m -framework Foundation`. No npm.
+- Teammates without a clone: `curl -fsSL https://raw.githubusercontent.com/shownmedia/capsflash/main/install.sh | bash`.
+- Start a fresh Claude session after install for new hooks to load.
+
 Local macOS CLI tool: flashes the caps lock LED (or keyboard backlight as fallback) as a physical "look at the terminal" signal when a Claude Code session finishes or needs input. Never changes real caps lock state. No server, no deploy, no live URL — this runs entirely on the local Mac.
 
 GitHub: `shownmedia/capsflash` (public repo, `main` branch). No CI/CD deploy step; `.github/workflows/gitleaks.yml` only runs a secret scan (gitleaks) on push/PR.
@@ -23,14 +34,6 @@ Where to look for X (from git log, what people actually touch):
 ## Data
 
 None. No database, no state file beyond the transient `/tmp/capsflash-until-seen.pid` lock (pid of the running flasher, deleted on exit). No other repo owns related data.
-
-## Commands
-
-- Build: `clang -O2 -o capsflash capsflash.c -framework IOKit -framework CoreFoundation` and `clang -O2 -fobjc-arc -o kbflash kbflash.m -framework Foundation` (both are also done by `install.sh`). No `package.json`/build system — this is plain C/Objective-C, no npm.
-- Install/reinstall (idempotent, safe to re-run): `bash install.sh` (local clone) or `curl -fsSL https://raw.githubusercontent.com/shownmedia/capsflash/main/install.sh | bash` (no clone needed).
-- Manual flash: `~/capsflash/capsflash` (8 blinks default), `~/capsflash/capsflash 20 70` (urgent strobe), `~/capsflash/capsflash 2 250` (subtle pulse).
-- Test the hook path directly: `~/capsflash/flash-until-seen 600`.
-- No test suite, no deploy command — this never ships anywhere but the local `$HOME/capsflash` + `~/.claude/settings.json`.
 
 ## Env vars
 
