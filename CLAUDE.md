@@ -13,7 +13,7 @@ verify live: ~/capsflash/capsflash exits 0 and the caps lock LED blinks; curl -f
 
 Local macOS CLI tool: flashes the caps lock LED (or keyboard backlight as fallback) as a physical "look at the terminal" signal when a Claude Code session finishes or needs input. Never changes real caps lock state. No server, no deploy, no live URL — this runs entirely on the local Mac.
 
-GitHub: `shownmedia/capsflash` (public repo, `main` branch). No CI/CD deploy step; `.github/workflows/gitleaks.yml` only runs a secret scan (gitleaks) on push/PR.
+GitHub: `shownmedia/capsflash` (public repo, `main` branch). No CI/CD.
 
 ## Code map
 
@@ -29,7 +29,6 @@ Where to look for X (from git log, what people actually touch):
 - Changing the flash pattern/timing or hook wiring -> `install.sh` + `flash-until-seen` (wrapper-level timing) + `capsflash.c` / `kbflash.m` (hardcoded defaults: 8 blinks/120ms, 5 breaths/2400ms respectively).
 - Caps-lock-vs-backlight fallback behavior -> `flash-until-seen`'s `flash()` function + memory notes below (backlight was retired as primary, kept only as fallback).
 - Making the installer portable for other machines/teammates -> `install.sh` (no hardcoded `/Users/mitchell` paths; fetches via `curl`+`tar` when piped).
-- Secret-scanning -> `.github/workflows/gitleaks.yml`.
 
 ## Data
 
